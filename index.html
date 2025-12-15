@@ -1,4 +1,15 @@
-<link rel="stylesheet" href="style.css" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
 
 <div class="app">
   <!-- Sidebar / Contacts -->
@@ -11,11 +22,14 @@
         <button data-theme="dark" class="theme-btn">Dark</button>
       </div>
     </div>
+
     <div class="contacts">
-      <!-- Contact: Alex (pinned) -->
+      <!-- Contact: Alex -->
       <div class="contact active" data-contact-id="alex">
         <div class="avatar-wrapper">
-          <img class="avatar" id="alex-avatar" src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Alex">
+          <img class="avatar" id="alex-avatar"
+            src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200"
+            alt="Alex">
         </div>
         <div class="contact-info">
           <div class="contact-name-row">
@@ -29,7 +43,9 @@
       <!-- Contact: Elly -->
       <div class="contact" data-contact-id="elly">
         <div class="avatar-wrapper">
-          <img class="avatar" id="elly-avatar" src="https://images.pexels.com/photos/3760853/pexels-photo-3760853.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Elly">
+          <img class="avatar" id="elly-avatar"
+            src="https://images.pexels.com/photos/3760853/pexels-photo-3760853.jpeg?auto=compress&cs=tinysrgb&w=200"
+            alt="Elly">
         </div>
         <div class="contact-info">
           <div class="contact-name-row">
@@ -40,10 +56,12 @@
         </div>
       </div>
 
-      <!-- Extra contact: Office -->
+      <!-- Contact: Office -->
       <div class="contact" data-contact-id="office">
         <div class="avatar-wrapper">
-          <img class="avatar" id="office-avatar" src="https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Office">
+          <img class="avatar" id="office-avatar"
+            src="https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=200"
+            alt="Office">
         </div>
         <div class="contact-info">
           <div class="contact-name-row">
@@ -54,10 +72,12 @@
         </div>
       </div>
 
-      <!-- Extra contact: Friend -->
+      <!-- Contact: Friend -->
       <div class="contact" data-contact-id="friend">
         <div class="avatar-wrapper">
-          <img class="avatar" id="friend-avatar" src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Friend">
+          <img class="avatar" id="friend-avatar"
+            src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200"
+            alt="Friend">
         </div>
         <div class="contact-info">
           <div class="contact-name-row">
@@ -68,10 +88,12 @@
         </div>
       </div>
 
-      <!-- Extra contact: Notes -->
+      <!-- Contact: Notes -->
       <div class="contact" data-contact-id="notes">
         <div class="avatar-wrapper">
-          <img class="avatar" id="notes-avatar" src="https://images.pexels.com/photos/2246476/pexels-photo-2246476.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Notes">
+          <img class="avatar" id="notes-avatar"
+            src="https://images.pexels.com/photos/2246476/pexels-photo-2246476.jpeg?auto=compress&cs=tinysrgb&w=200"
+            alt="Notes">
         </div>
         <div class="contact-info">
           <div class="contact-name-row">
@@ -90,28 +112,24 @@
       <div class="header-left">
         <button class="back-btn" id="back-btn">‹</button>
         <div class="header-avatar-wrapper">
-          <img id="chat-avatar" class="header-avatar" src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Profile">
+          <img id="chat-avatar" class="header-avatar"
+            src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200">
         </div>
         <div class="header-contact-info">
           <div class="header-name" id="chat-name">Alex</div>
           <div class="header-status" id="chat-status">Online</div>
         </div>
       </div>
-      <div class="header-right">
-        <button class="call-btn" id="call-btn">Call</button>
-        <button class="edit-profile-btn" id="edit-profile-btn">Edit</button>
-      </div>
+      <button class="edit-profile-btn" id="edit-profile-btn">Edit</button>
     </div>
 
-    <div class="chat-body" id="chat-body">
-      <!-- Messages & date separators go here -->
-    </div>
+    <div class="chat-body" id="chat-body"></div>
 
     <div class="typing-indicator" id="typing-indicator">
       <span class="dot"></span>
       <span class="dot"></span>
       <span class="dot"></span>
-      <span class="typing-text" id="typing-text">Typing...</span>
+      <span class="typing-text">Typing...</span>
     </div>
 
     <div class="chat-input">
@@ -123,29 +141,30 @@
   </div>
 </div>
 
-<!-- Modal for profile photo zoom + change + about -->
+<!-- Profile modal -->
 <div class="modal" id="profile-modal">
   <div class="modal-content">
     <span class="modal-close" id="profile-modal-close">&times;</span>
-    <img id="modal-avatar" class="modal-avatar" src="" alt="Profile Large">
+    <img id="modal-avatar" class="modal-avatar">
     <div class="modal-about" id="modal-about"></div>
-    <div class="modal-actions">
-      <label class="upload-label">
-        Change Photo
-        <input type="file" id="avatar-input" accept="image/*" hidden>
-      </label>
-    </div>
+    <label class="upload-label">
+      Change Photo
+      <input type="file" id="avatar-input" accept="image/*" hidden>
+    </label>
   </div>
 </div>
 
 <!-- Rename popup -->
 <div class="rename-popup" id="rename-popup">
-  <input type="text" id="rename-input" />
+  <input type="text" id="rename-input">
   <button id="rename-save-btn">Save</button>
   <button id="rename-cancel-btn">Cancel</button>
 </div>
 
-<!-- Toast notification -->
 <div class="toast" id="toast">Saved</div>
 
+<!-- JavaScript -->
 <script src="main.js"></script>
+
+</body>
+</html>
