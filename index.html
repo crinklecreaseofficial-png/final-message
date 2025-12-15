@@ -1,3 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App</title>
+
+  <!-- ✅ LINK CSS FOR GITHUB -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
 <div class="app">
   <!-- Sidebar / Contacts -->
   <div class="sidebar">
@@ -100,9 +112,7 @@
       </div>
     </div>
 
-    <div class="chat-body" id="chat-body">
-      <!-- Messages & date separators go here -->
-    </div>
+    <div class="chat-body" id="chat-body"></div>
 
     <div class="typing-indicator" id="typing-indicator">
       <span class="dot"></span>
@@ -120,7 +130,7 @@
   </div>
 </div>
 
-<!-- Modal for profile photo zoom + change + about -->
+<!-- Modal -->
 <div class="modal" id="profile-modal">
   <div class="modal-content">
     <span class="modal-close" id="profile-modal-close">&times;</span>
@@ -142,5 +152,11 @@
   <button id="rename-cancel-btn">Cancel</button>
 </div>
 
-<!-- Toast notification -->
+<!-- Toast -->
 <div class="toast" id="toast">Saved</div>
+
+<!-- ✅ LINK JAVASCRIPT FOR GITHUB -->
+<script src="./script.js"></script>
+
+</body>
+</html>
