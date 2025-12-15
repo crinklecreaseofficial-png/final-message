@@ -1,5 +1,5 @@
 :root {
-  /* Default = "Cute" (sky‑blue + pink dreamy mix) */
+  /* Default = "Cute" (sky‑blue + pink mix) */
   --bg: #f7f8ff;
   --bg-secondary: #ffffff;
   --accent: #ff7fbf;
@@ -10,7 +10,7 @@
   --chat-bg: radial-gradient(circle at top, #d9f0ff 0%, #fbe5ff 50%, #f7f8ff 100%);
   --bubble-me: linear-gradient(135deg, #7fc9ff, #ff7fbf);
   --bubble-them: rgba(255, 255, 255, 0.96);
-  --shadow-soft: 0 16px 34px rgba(41, 60, 122, 0.18);
+  --shadow-soft: 0 10px 24px rgba(41, 60, 122, 0.18);
 }
 
 /* LIGHT THEME (WhatsApp‑ish) */
@@ -50,13 +50,9 @@ body.dark-theme {
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", -apple-system, sans-serif;
-  background: radial-gradient(circle at top, #e3ebff 0%, #fef6ff 70%);
+  background: var(--bg);
   color: var(--text-main);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   height: 100vh;
-  overflow: hidden;
 }
 
 /* App shell */
@@ -64,15 +60,12 @@ body {
 .app {
   width: 100%;
   max-width: 1100px;
-  height: 90vh;
-  max-height: 800px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.9), rgba(226, 234, 255, 0.9));
-  border-radius: 30px;
+  height: 100vh;
+  margin: 0 auto;
+  background: var(--bg-secondary);
   box-shadow: var(--shadow-soft);
   display: flex;
   overflow: hidden;
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 /* Sidebar */
@@ -80,10 +73,10 @@ body {
 .sidebar {
   width: 32%;
   min-width: 260px;
-  border-right: 1px solid rgba(0, 0, 0, 0.03);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #fdfbff 0%, #e8f4ff 100%);
+  background: var(--bg-secondary);
 }
 
 .sidebar-header {
@@ -111,15 +104,13 @@ body {
   padding: 4px 6px;
   font-size: 10px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg);
   color: var(--text-muted);
-  transition: background 0.16s ease-out, color 0.16s ease-out, transform 0.12s ease-out;
 }
 
 .theme-btn.active {
   background: var(--accent);
   color: #fff;
-  transform: translateY(-1px);
 }
 
 .contacts {
@@ -135,13 +126,12 @@ body {
   padding: 8px 10px;
   border-radius: 16px;
   cursor: pointer;
-  transition: background 0.16s ease-out, transform 0.12s ease-out;
+  transition: background 0.15s ease-out;
   margin-bottom: 4px;
 }
 
 .contact:hover {
-  background: rgba(255, 127, 191, 0.12);
-  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .contact.active {
@@ -208,19 +198,19 @@ body {
 /* Header */
 
 .chat-header {
-  height: 64px;
-  padding: 10px 14px;
+  height: 60px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(225, 237, 255, 0.9));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .back-btn {
@@ -237,8 +227,8 @@ body {
 }
 
 .header-avatar {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 14px;
   object-fit: cover;
 }
@@ -267,31 +257,22 @@ body {
 .edit-profile-btn {
   border-radius: 999px;
   border: none;
-  padding: 5px 12px;
+  padding: 4px 10px;
   background: var(--accent-soft);
   color: var(--accent-strong);
   font-size: 11px;
   cursor: pointer;
-  transition: background 0.14s ease-out, transform 0.12s ease-out;
 }
 
-.edit-profile-btn:hover {
-  background: var(--accent);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
+/* simple call button style */
 .call-btn {
   border-radius: 999px;
   border: none;
-  padding: 5px 10px;
+  padding: 4px 10px;
   background: rgba(127, 201, 255, 0.2);
   color: #1c4c7a;
   font-size: 11px;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 /* Chat body */
@@ -299,8 +280,8 @@ body {
 .chat-body {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 14px 10px;
-  background: transparent;
+  padding: 10px 12px 10px;
+  background: var(--chat-bg);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -355,7 +336,7 @@ body {
   font-size: 13px;
   line-height: 1.5;
   position: relative;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* Bubble tails + grouping */
@@ -452,24 +433,24 @@ body {
 /* Input area */
 
 .chat-input {
-  padding: 10px 14px 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(235, 243, 255, 0.9));
+  padding: 6px 8px;
+  background: var(--bg-secondary);
   display: flex;
   gap: 6px;
-  border-top: 1px solid rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   align-items: center;
 }
 
 #message-input {
   flex: 1;
-  border-radius: 20px;
+  border-radius: 18px;
   border: none;
   resize: none;
-  padding: 8px 10px;
+  padding: 7px 9px;
   font-size: 13px;
-  max-height: 90px;
+  max-height: 70px;
   outline: none;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg);
   color: var(--text-main);
 }
 
@@ -478,34 +459,23 @@ body {
 }
 
 #send-btn {
-  border-radius: 999px;
-  padding: 7px 14px;
+  border-radius: 18px;
+  padding: 6px 12px;
   border: none;
   background: var(--accent);
   color: #fff;
   font-size: 13px;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
-}
-
-#send-btn:hover {
-  background: var(--accent-strong);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .attach-btn {
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: transparent;
+  background: var(--bg);
   color: var(--accent-strong);
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
 }
 
@@ -557,7 +527,6 @@ body {
   box-shadow: var(--shadow-soft);
   text-align: center;
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .modal-close {
@@ -609,7 +578,6 @@ body {
   flex-direction: row;
   gap: 6px;
   z-index: 1100;
-  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .rename-popup.visible {
@@ -673,7 +641,7 @@ body {
 .call-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(67, 131, 255, 0.9), rgba(255, 127, 191, 0.9));
+  background: rgba(0, 0, 0, 0.6);
   display: none;
   align-items: center;
   justify-content: center;
@@ -685,7 +653,7 @@ body {
 }
 
 .call-card {
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   border-radius: 24px;
   padding: 18px 22px 20px;
   width: 260px;
@@ -749,6 +717,10 @@ body {
 /* Responsive */
 
 @media (max-width: 780px) {
+  body {
+    height: 100vh;
+  }
+
   .app {
     width: 100%;
     height: 100vh;
