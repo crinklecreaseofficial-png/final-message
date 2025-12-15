@@ -79,6 +79,23 @@ function getDateKey(date) {
 
 loadState();
 
+// Build history for backend: last few user/assistant turns
+function buildHistoryForBackend(contactId, limit = 8) {
+  const conv = conversations[contactId] || [];
+  const history = [];
+
+  for (const msg of conv) {
+    if (msg.role === "user" || msg.role === "assistant") {
+      history.push({
+        role: msg.role,
+        content: msg.content || ""
+      });
+    }
+  }
+
+  return history.slice(-limit);
+}
+
 // =========================
 // DOM refs
 // =========================
@@ -130,6 +147,16 @@ const themeBtns = document.querySelectorAll(".theme-btn");
 // Toast
 const toastEl = document.getElementById("toast");
 
+// Message context menu (for delete single message)
+let messageMenuEl = null;
+let messageMenuTargetIndex = null;
+
+// Call overlay
+let callOverlayEl = null;
+let callTimerInterval = null;
+let callSeconds = 0;
+let lastCallInitiator = "you"; // "you" or "them"
+
 // =========================
 // Theme
 // =========================
@@ -176,6 +203,98 @@ function showToast(message) {
 }
 
 // =========================
+// Message context menu (delete single message)
+// =========================
+
+function ensureMessageMenu() {
+  if (messageMenuEl) return;
+  messageMenuEl = document.createElement("div");
+  messageMenuEl.id = "message-menu";
+  messageMenuEl.className = "message-menu";
+  messageMenuEl.textContent = "Delete message";
+  document.body.appendChild(messageMenuEl);
+
+  messageMenuEl.addEventListener("click", () => {
+    if (messageMenuTargetIndex == null) {
+      hideMessageMenu();
+      return;
+    }
+    const msgs = conversations[currentContactId] || [];
+    if (messageMenuTargetIndex >= 0 && messageMenuTargetIndex < msgs.length) {
+      msgs.splice(messageMenuTargetIndex, 1);
+      conversations[currentContactId] = msgs;
+      saveState();
+      renderContacts();
+      renderChat(currentContactId);
+      showToast("Message deleted");
+    }
+    hideMessageMenu();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (messageMenuEl && !messageMenuEl.contains(e.target)) {
+      hideMessageMenu();
+    }
+  });
+}
+
+function showMessageMenu(x, y, msgIndex) {
+  ensureMessageMenu();
+  messageMenuTargetIndex = msgIndex;
+  messageMenuEl.style.top = y + "px";
+  messageMenuEl.style.left = x + "px";
+  messageMenuEl.classList.add("visible");
+}
+
+function hideMessageMenu() {
+  if (messageMenuEl) messageMenuEl.classList.remove("visible");
+  messageMenuTargetIndex = null;
+}
+
+// helper: attach long-press events to bubbles
+function attachLongPressHandlers() {
+  const bubbles = chatBodyEl.querySelectorAll(".message-bubble");
+  bubbles.forEach(bubble => {
+    const idxStr = bubble.getAttribute("data-index");
+    if (idxStr == null) return;
+    const msgIndex = parseInt(idxStr, 10);
+    let pressTimer = null;
+
+    const start = () => {
+      pressTimer = setTimeout(() => {
+        const rect = bubble.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        showMessageMenu(x, y, msgIndex);
+      }, 600);
+    };
+
+    const cancel = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    bubble.addEventListener("mousedown", start);
+    bubble.addEventListener("mouseup", cancel);
+    bubble.addEventListener("mouseleave", cancel);
+
+    bubble.addEventListener("touchstart", () => {
+      pressTimer = setTimeout(() => {
+        const rect = bubble.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        showMessageMenu(x, y, msgIndex);
+      }, 600);
+    }, { passive: true });
+
+    bubble.addEventListener("touchend", cancel, { passive: true });
+    bubble.addEventListener("touchmove", cancel, { passive: true });
+  });
+}
+
+// =========================
 // Contacts render
 // =========================
 
@@ -202,6 +321,7 @@ function renderContacts() {
     const last = msgs[msgs.length - 1];
     const prefix = last.role === "user" ? "You: " : "";
     if (last.type === "image") el.textContent = prefix + "[Image]";
+    else if (last.type === "call") el.textContent = prefix + last.content;
     else el.textContent = prefix + last.content.slice(0, 40);
   }
 
@@ -218,8 +338,26 @@ function renderContacts() {
 
 function renderChat(contactId) {
   chatBodyEl.innerHTML = "";
+  hideMessageMenu();
   const msgs = conversations[contactId] || [];
   let lastDateKey = null;
+
+  if (msgs.length === 0) {
+    const empty = document.createElement("div");
+    empty.style.textAlign = "center";
+    empty.style.marginTop = "24px";
+    empty.style.fontSize = "12px";
+    empty.style.opacity = "0.8";
+    if (contactId === "notes") {
+      empty.textContent = "This is your space. Drop any thoughts, notes, or to‑dos here.";
+    } else if (contactId === "office") {
+      empty.textContent = "Plan work, track tasks, or jot ideas down here.";
+    } else {
+      empty.textContent = `Start a conversation with ${contactSettings[contactId].name}.`;
+    }
+    chatBodyEl.appendChild(empty);
+    return;
+  }
 
   msgs.forEach((msg, idx) => {
     const msgDate = msg._dateObj ? new Date(msg._dateObj) : new Date();
@@ -236,11 +374,27 @@ function renderChat(contactId) {
       lastDateKey = dKey;
     }
 
+    // Special render for call messages
+    if (msg.type === "call") {
+      const callRow = document.createElement("div");
+      callRow.classList.add("date-separator");
+      const callBadge = document.createElement("span");
+      callBadge.classList.add("call-badge");
+      if (msg.subtype === "missed") {
+        callBadge.classList.add("call-badge-missed");
+      }
+      callBadge.textContent = msg.content;
+      callRow.appendChild(callBadge);
+      chatBodyEl.appendChild(callRow);
+      return;
+    }
+
     const row = document.createElement("div");
     row.classList.add("message-row", msg.role === "user" ? "me" : "them");
 
     const bubble = document.createElement("div");
     bubble.classList.add("message-bubble");
+    bubble.setAttribute("data-index", idx.toString());
 
     const prev = msgs[idx - 1];
     const next = msgs[idx + 1];
@@ -286,22 +440,37 @@ function renderChat(contactId) {
   });
 
   chatBodyEl.scrollTop = chatBodyEl.scrollHeight;
+  attachLongPressHandlers();
 }
 
 // =========================
 // Typing indicator + header status
 // =========================
 
-function showTyping(name) {
-  typingTextEl.textContent = `${name} is typing...`;
+function showTyping(name, contactId) {
+  let typingText = "";
+  if (contactId === "notes") typingText = "Writing this down...";
+  else if (contactId === "office") typingText = "Preparing something for you...";
+  else typingText = `${name} is typing...`;
+
+  typingTextEl.textContent = typingText;
   typingIndicatorEl.classList.add("visible");
   chatStatusEl.textContent = "Typing…";
 }
 
 function restoreStatus(contactId) {
-  if (contactId === "alex") chatStatusEl.textContent = "Online";
-  else if (contactId === "elly") chatStatusEl.textContent = Math.random() > 0.5 ? "Online" : "Last seen recently";
-  else chatStatusEl.textContent = "Last seen " + formatTime(new Date());
+  const now = new Date();
+  if (contactId === "alex") {
+    chatStatusEl.textContent = Math.random() > 0.2 ? "Online" : "Last seen just now";
+  } else if (contactId === "elly") {
+    chatStatusEl.textContent = Math.random() > 0.5 ? "Online" : "Last seen recently";
+  } else if (contactId === "notes") {
+    chatStatusEl.textContent = "Notes · private";
+  } else if (contactId === "office") {
+    chatStatusEl.textContent = "Work / tasks";
+  } else {
+    chatStatusEl.textContent = "Last seen " + formatTime(now);
+  }
 }
 
 function hideTyping(contactId) {
@@ -310,17 +479,19 @@ function hideTyping(contactId) {
 }
 
 // =========================
-// Backend-based replies (Cloudflare Worker + OpenRouter)
+// Backend-based replies
 // =========================
 
 const BACKEND_URL = "https://noisy-haze-453b.crinkle-crease-official.workers.dev";
 
 async function getMockReply(contactId, userText) {
   try {
+    const history = buildHistoryForBackend(contactId);
+
     const res = await fetch(BACKEND_URL + "/api/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contactId, userText })
+      body: JSON.stringify({ contactId, userText, history })
     });
 
     if (!res.ok) {
@@ -337,7 +508,11 @@ async function getMockReply(contactId, userText) {
 }
 
 function mockSendMessage(contactId, userText) {
-  const delay = 800 + Math.floor(Math.random() * 1200);
+  const base = 700;
+  const extraPerChar = 8; // ms per char, capped
+  const len = userText ? Math.min(userText.length, 120) : 0;
+  const delay = base + len * extraPerChar + Math.floor(Math.random() * 600);
+
   return new Promise(resolve => {
     setTimeout(async () => {
       const replyText = await getMockReply(contactId, userText);
@@ -378,7 +553,7 @@ async function sendMessage({ text, imageData }) {
   chatBodyEl.scrollTop = chatBodyEl.scrollHeight;
 
   const name = contactSettings[currentContactId].name;
-  showTyping(name);
+  showTyping(name, currentContactId);
 
   const msgs = conversations[currentContactId];
   const lastUser = msgs.filter(m => m.role === "user").slice(-1)[0];
@@ -386,13 +561,22 @@ async function sendMessage({ text, imageData }) {
   renderChat(currentContactId);
   saveState();
 
-  const replyText = await mockSendMessage(currentContactId, text || "[image]");
+  let backendText = text;
+  if (!backendText && imageData) {
+    backendText = "I just sent you a picture. It's something I wanted to show you.";
+  }
+
+  const replyText = await mockSendMessage(currentContactId, backendText);
 
   hideTyping(currentContactId);
 
-  const msgsAfter = conversations[currentContactId];
-  const lastUserAfter = msgsAfter.filter(m => m.role === "user").slice(-1)[0];
-  if (lastUserAfter) lastUserAfter.status = "read";
+  setTimeout(() => {
+    const msgsAfter = conversations[currentContactId] || [];
+    const lastUserAfter = msgsAfter.filter(m => m.role === "user").slice(-1)[0];
+    if (lastUserAfter) lastUserAfter.status = "read";
+    renderChat(currentContactId);
+    saveState();
+  }, 400);
 
   const replyTime = formatTime(new Date());
   const replyMsg = {
@@ -422,6 +606,13 @@ messageInputEl.addEventListener("keydown", (e) => {
   }
 });
 
+// Keep chat scrolled when focusing input (helps on mobile)
+messageInputEl.addEventListener("focus", () => {
+  setTimeout(() => {
+    chatBodyEl.scrollTop = chatBodyEl.scrollHeight;
+  }, 100);
+});
+
 attachBtnEl.addEventListener("click", () => {
   imageInputEl.click();
 });
@@ -429,6 +620,9 @@ attachBtnEl.addEventListener("click", () => {
 imageInputEl.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  if (!messageInputEl.value.trim()) {
+    showToast("Add a short caption so they know what the picture is.");
+  }
   const reader = new FileReader();
   reader.onload = async function(evt) {
     const dataUrl = evt.target.result;
@@ -482,6 +676,38 @@ function openProfileModal(id) {
   const settings = contactSettings[id];
   modalAvatarEl.src = settings.avatar;
   modalAboutEl.innerHTML = getContactAbout(id);
+
+  let existingDeleteBtn = document.getElementById("delete-chat-btn");
+  if (!existingDeleteBtn) {
+    const actions = profileModalEl.querySelector(".modal-actions");
+    const btn = document.createElement("button");
+    btn.id = "delete-chat-btn";
+    btn.textContent = "Delete chat";
+    btn.style.marginLeft = "8px";
+    btn.style.borderRadius = "999px";
+    btn.style.border = "none";
+    btn.style.padding = "6px 14px";
+    btn.style.fontSize = "13px";
+    btn.style.cursor = "pointer";
+    btn.style.background = "#e53935";
+    btn.style.color = "#fff";
+    actions.appendChild(btn);
+
+    btn.addEventListener("click", () => {
+      const confirmDelete = window.confirm("Delete all messages in this chat? This cannot be undone.");
+      if (!confirmDelete) return;
+
+      conversations[modalContactId] = [];
+      saveState();
+      renderContacts();
+      if (modalContactId === currentContactId) {
+        renderChat(currentContactId);
+      }
+      showToast("Chat deleted");
+      closeProfileModal();
+    });
+  }
+
   profileModalEl.classList.add("visible");
 }
 
@@ -519,6 +745,126 @@ avatarInputEl.addEventListener("change", (e) => {
 editProfileBtnEl.addEventListener("click", () => {
   openProfileModal(currentContactId);
 });
+
+// =========================
+// Call overlay (fake call UI + call history)
+// =========================
+
+function ensureCallOverlay() {
+  if (callOverlayEl) return;
+  callOverlayEl = document.createElement("div");
+  callOverlayEl.className = "call-overlay";
+  callOverlayEl.innerHTML = `
+    <div class="call-card">
+      <div class="call-avatar-wrap">
+        <img id="call-avatar" class="call-avatar" src="" alt="Call avatar">
+      </div>
+      <div class="call-name" id="call-name"></div>
+      <div class="call-status" id="call-status">Calling...</div>
+      <div class="call-timer" id="call-timer">00:00</div>
+      <button class="call-end-btn" id="call-end-btn">End Call</button>
+    </div>
+  `;
+  document.body.appendChild(callOverlayEl);
+
+  const endBtn = callOverlayEl.querySelector("#call-end-btn");
+  endBtn.addEventListener("click", endCall);
+}
+
+function startCall() {
+  ensureCallOverlay();
+  lastCallInitiator = "you";
+  const settings = contactSettings[currentContactId];
+  const callAvatarImg = callOverlayEl.querySelector("#call-avatar");
+  const callNameEl = callOverlayEl.querySelector("#call-name");
+  const callStatus = callOverlayEl.querySelector("#call-status");
+  const callTimer = callOverlayEl.querySelector("#call-timer");
+
+  callAvatarImg.src = settings.avatar;
+  callNameEl.textContent = settings.name;
+  callStatus.textContent = "Calling…";
+  callTimer.textContent = "00:00";
+  callSeconds = 0;
+
+  callOverlayEl.classList.add("visible");
+
+  setTimeout(() => {
+    if (!callOverlayEl.classList.contains("visible")) return;
+    callStatus.textContent = "On call";
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    callTimerInterval = setInterval(() => {
+      callSeconds += 1;
+      const mm = String(Math.floor(callSeconds / 60)).padStart(2, "0");
+      const ss = String(callSeconds % 60).padStart(2, "0");
+      callTimer.textContent = `${mm}:${ss}`;
+    }, 1000);
+  }, 2000);
+}
+
+function endCall() {
+  if (callOverlayEl) {
+    callOverlayEl.classList.remove("visible");
+  }
+  if (callTimerInterval) {
+    clearInterval(callTimerInterval);
+    callTimerInterval = null;
+  }
+
+  const now = new Date();
+  const timeStr = formatTime(now);
+  const dateKey = getDateKey(now);
+
+  const durationSec = callSeconds;
+  let durationLabel = "Missed call";
+  let subtype = "missed";
+  if (durationSec > 0) {
+    const minutes = Math.floor(durationSec / 60);
+    const seconds = durationSec % 60;
+    const mm = String(minutes).padStart(2, "0");
+    const ss = String(seconds).padStart(2, "0");
+    durationLabel = `${mm}:${ss}`;
+    subtype = "completed";
+  }
+
+  const contactName = contactSettings[currentContactId].name;
+  let content;
+  if (lastCallInitiator === "you") {
+    if (durationSec > 0) {
+      content = `You called ${contactName} – ${durationLabel}`;
+    } else {
+      content = `You tried calling ${contactName} – missed call`;
+    }
+  } else {
+    if (durationSec > 0) {
+      content = `${contactName} called you – ${durationLabel}`;
+    } else {
+      content = `${contactName} tried calling – missed call`;
+    }
+  }
+
+  const callMsg = {
+    role: "assistant",
+    content,
+    time: timeStr,
+    dateStr: dateKey,
+    type: "call",
+    subtype,
+    _dateObj: now.toISOString()
+  };
+
+  conversations[currentContactId] = conversations[currentContactId] || [];
+  conversations[currentContactId].push(callMsg);
+  saveState();
+  renderContacts();
+  renderChat(currentContactId);
+
+  callSeconds = 0;
+}
+
+const callBtnEl = document.getElementById("call-btn");
+if (callBtnEl) {
+  callBtnEl.addEventListener("click", startCall);
+}
 
 // =========================
 // Rename contacts
@@ -581,6 +927,12 @@ function setActiveContact(id) {
   restoreStatus(id);
   renderChat(id);
 
+  if (id === "notes") {
+    messageInputEl.placeholder = "Write a note...";
+  } else {
+    messageInputEl.placeholder = `Message ${settings.name}...`;
+  }
+
   document.querySelector(".chat-container").classList.add("visible");
 }
 
@@ -609,7 +961,7 @@ function initChat() {
     const dateKey = getDateKey(now);
     conversations.alex.push({
       role: "assistant",
-      content: "Hey love, it’s Alex. I’ve been thinking about you. How’s my favorite journalism student in India doing today?",
+      content: "Hey love, it’s Alex. I’ve been thinking about you all day and just wanted to check in on you.",
       time: timeStr,
       dateStr: dateKey,
       type: "text",
